@@ -2,10 +2,11 @@
 
 describe('Hermione Granger - Wizard Bank Flow', () => {
   const depositAmount = 500;
-  const drawAmount = 200;
+  const withdrawAmount = 200;
+  let initialBalance;
 
   it('should perform full transaction flow for Hermione', () => {
-    cy.visit('https://www.glsqa.com/angJs-protractor/BankProject/#/login');
+    cy.visit('https://www.globalsqa.com/angJs-protractor/BankProject/#/login');
 
     cy.contains('Customer Login').click();
 
@@ -14,7 +15,10 @@ describe('Hermione Granger - Wizard Bank Flow', () => {
 
     cy.get('.center strong').eq(0).should('contain', '1001');
 
-    cy.get('.center strong').eq(1).should('exist');
+    cy.get('.center strong').eq(1).invoke('text').then((text) => {
+      initialBalance = parseFloat(text);
+    });
+
     cy.get('.center strong').eq(2).should('contain', 'Dollar');
 
     cy.contains('Deposit').click();
@@ -22,19 +26,26 @@ describe('Hermione Granger - Wizard Bank Flow', () => {
     cy.get('form button').click();
     cy.get('.error').should('contain', 'Deposit Successful');
 
-    cy.get('.center strong').eq(1).should('contain', depositAmount);
+    cy.get('.center strong').eq(1).should(($balance) => {
+      const newBalance = parseFloat($balance.text());
+      expect(newBalance).to.equal(initialBalance + depositAmount);
+    });
 
     cy.contains('Withdrawl').click();
-    cy.get('input[placeholder="amount"]').type(drawAmount.toString());
+    cy.get('input[placeholder="amount"]').type(withdrawAmount.toString());
     cy.get('form button').click();
     cy.get('.error').should('contain', 'Transaction successful');
-    cy.get('.center strong').eq(1).should('contain', depositAmount - drawAmount
-    );
+
+    cy.get('.center strong').eq(1).should(($balance) => {
+      const afterWithdrawal = parseFloat($balance.text());
+      expect(afterWithdrawal).to
+        .equal(initialBalance + depositAmount - withdrawAmount);
+    });
 
     cy.contains('Transactions').click();
     cy.get('tr').should('have.length.greaterThan', 2);
     cy.get('tr').eq(1).should('contain', depositAmount);
-    cy.get('tr').eq(2).should('contain', drawAmount);
+    cy.get('tr').eq(2).should('contain', withdrawAmount);
 
     cy.contains('Back').click();
     cy.get('select').select('1002');
